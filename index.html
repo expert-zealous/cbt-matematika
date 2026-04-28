@@ -124,16 +124,6 @@ input{
   flex-wrap:wrap;
 }
 
-/* 🔥 FIX CENTER HP */
-@media (max-width:768px){
-  .result-container{
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-  }
-}
-
 .trophy{
   width:180px;
   animation:float 2s ease-in-out infinite;
@@ -228,7 +218,7 @@ let interval;
 
 function mulai(){
  if(!nama.value||token.value!==TOKEN) return alert("Data salah");
- document.documentElement.requestFullscreen().catch(()=>{});
+ document.documentElement.requestFullscreen();
  start.style.display="none";
  quiz.style.display="flex";
  buildNav();
@@ -239,20 +229,12 @@ function mulai(){
 function tampil(){
  let q=soalData[i];
  no.innerText="Soal "+(i+1)+"/25";
-
- soal.innerHTML=`<div class="card">
- <img src="${q.img}" style="max-width:100%"
- onerror="this.src='${q.img.replace('.png','.PNG')}'">
- </div>`;
-
+ soal.innerHTML=`<div class="card"><img src="${q.img}" style="max-width:100%"></div>`;
  let html="";
  q.opsi.forEach((o,x)=>{
   html+=`<div class="option ${jawaban[i]==x?'active':''}" onclick="pilih(${x})">
-  <img src="${o}" style="max-height:80px"
-  onerror="this.src='${o.replace('.png','.PNG')}'">
-  </div>`;
+  <img src="${o}" style="max-height:80px"></div>`;
  });
-
  opsi.innerHTML=html;
  updateNav();
 }
@@ -292,11 +274,59 @@ function timer(){
  },1000);
 }
 
+function beep(){
+ let ctx=new AudioContext();
+ let o=ctx.createOscillator();
+ let g=ctx.createGain();
+ o.connect(g);g.connect(ctx.destination);
+ o.frequency.value=800;
+ o.start();
+ g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.2);
+ o.stop(ctx.currentTime+0.2);
+}
+
+function fireworks(){
+ const c=document.getElementById("fireworks");
+ const ctx=c.getContext("2d");
+ c.width=innerWidth;
+ c.height=innerHeight;
+
+ let p=[];
+ for(let i=0;i<120;i++){
+  p.push({
+   x:c.width/2,y:c.height/2,
+   vx:(Math.random()-0.5)*10,
+   vy:(Math.random()-0.5)*10,
+   a:1,
+   color:`hsl(${Math.random()*360},100%,60%)`
+  });
+ }
+
+ function draw(){
+  ctx.clearRect(0,0,c.width,c.height);
+  p.forEach(o=>{
+   o.x+=o.vx;o.y+=o.vy;o.a-=0.01;
+   ctx.globalAlpha=o.a;
+   ctx.fillStyle=o.color;
+   ctx.fillRect(o.x,o.y,3,3);
+  });
+  p=p.filter(o=>o.a>0);
+  if(p.length) requestAnimationFrame(draw);
+ }
+
+ draw();
+ setTimeout(()=>ctx.clearRect(0,0,c.width,c.height),3000);
+}
+
 function finish(){
  if(finished) return;
  finished=true;
 
  clearInterval(interval);
+ document.getElementById("btnFinish").disabled=true;
+ document.getElementById("btnFinish").classList.add("btn-disabled");
+
+ beep();
 
  let benar=0,salah=0,kosong=0;
  jawaban.forEach((a,x)=>{
@@ -307,11 +337,12 @@ function finish(){
 
  let skor=Math.round(benar/25*100);
 
- let trophyImg="https://i.ibb.co.com/ccGh3v5s/epic-transparan.png";
+ // 🏆 PILIH GAMBAR PIALA ASLI
+ let trophyImg="https://i.ibb.co.com/ccGh3v5s/epic-transparan.png"; // bronze
  if(skor>=80){
-   trophyImg="https://i.ibb.co.com/ShTKq8V/mitic-transparan.png";
+   trophyImg="https://i.ibb.co.com/ShTKq8V/mitic-transparan.png"; // gold
  }else if(skor>=60){
-   trophyImg="https://i.ibb.co.com/7dnbNJGW/legend-transparan.png";
+   trophyImg="https://i.ibb.co.com/7dnbNJGW/legend-transparan.png"; // silver
  }
 
  quiz.style.display="none";
@@ -319,22 +350,29 @@ function finish(){
 
  setTimeout(()=>hasil.classList.add("show"),100);
 
+ fireworks();
+
  hasil.innerHTML=`
  <div class="result-container">
+
   <img class="trophy" src="${trophyImg}">
+
   <div>
     <h1 style="font-size:42px;">TOTAL NILAI ${skor}</h1>
+
     <div class="chart">
       <div>
         <div class="bar-v" style="height:${benar/25*200}px;background:lime"></div>
         <div class="label">Benar</div>
         <div class="value">${benar}</div>
       </div>
+
       <div>
         <div class="bar-v" style="height:${salah/25*200}px;background:red"></div>
         <div class="label">Salah</div>
         <div class="value">${salah}</div>
       </div>
+
       <div>
         <div class="bar-v" style="height:${kosong/25*200}px;background:white"></div>
         <div class="label">Kosong</div>
@@ -342,9 +380,18 @@ function finish(){
       </div>
     </div>
   </div>
+
  </div>
  `;
 }
+
+document.addEventListener("visibilitychange",()=>{
+ if(document.hidden && !finished) finish();
+});
+
+document.addEventListener("fullscreenchange",()=>{
+ if(!document.fullscreenElement && !finished) finish();
+});
 
 </script>
 
