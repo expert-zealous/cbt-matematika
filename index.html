@@ -215,9 +215,11 @@ function mulai(){
    return;
  }
 
- // FULLSCREEN
- if(document.documentElement.requestFullscreen){
-   document.documentElement.requestFullscreen();
+ // FULLSCREEN (DESKTOP + HP)
+ if (document.body.requestFullscreen) {
+   document.body.requestFullscreen();
+ } else if (document.body.webkitRequestFullscreen) {
+   document.body.webkitRequestFullscreen();
  }
 
  namaPeserta=namaInput.value;
@@ -363,7 +365,7 @@ function finish(){
  },100);
 }
 
-// ANTI KELUAR FULLSCREEN
+// AUTO SUBMIT KALAU KELUAR FULLSCREEN
 document.addEventListener("fullscreenchange",()=>{
  if(!document.fullscreenElement && !finished){
    finish();
