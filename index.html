@@ -68,23 +68,10 @@ input{
   border-radius:10px;
   border:1px solid #cbd5e1;
   cursor:pointer;
-
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-  gap:10px;
 }
 
-/* aktif */
 .option.active{
   background:#dc2626;
-  border:2px solid #dc2626;
-}
-
-/* gambar normal (AMAN) */
-.option img{
-  max-height:80px;
-  display:block;
 }
 
 /* NAV */
@@ -117,7 +104,6 @@ input{
 .btn-prev{background:white;color:black;}
 .btn-next{background:#3b82f6;color:white;}
 .btn-submit{background:#10b981;color:white;}
-.btn-disabled{background:gray !important;cursor:not-allowed;}
 
 /* RESULT */
 #hasil{
@@ -144,16 +130,9 @@ input{
 
 .trophy{
   width:180px;
-  animation:float 2s ease-in-out infinite;
 }
 
-@keyframes float{
-  0%{transform:translateY(0);}
-  50%{transform:translateY(-12px);}
-  100%{transform:translateY(0);}
-}
-
-/* BAR */
+/* CHART */
 .chart{
   display:flex;
   gap:40px;
@@ -203,7 +182,7 @@ Mulai Ujian
 <div style="margin-top:20px;display:flex;gap:10px;">
 <button class="btn btn-prev" onclick="prev()">Sebelumnya</button>
 <button class="btn btn-next" onclick="next()">Selanjutnya</button>
-<button id="btnFinish" class="btn btn-submit" onclick="finish()">Selesai</button>
+<button class="btn btn-submit" onclick="finish()">Selesai</button>
 </div>
 </div>
 
@@ -216,12 +195,9 @@ Mulai Ujian
 <div id="hasil"></div>
 
 <script>
-
-// ================= CONFIG =================
 const TOKEN="EZ2026";
 const SHEET_URL="https://script.google.com/macros/s/AKfycbx-Li92VI_MPrWMjY1lJ5e4tuh4X4r6jDYhcrxqyxB7mAcxNcQD26Fmg_MOQ2UI8-BB/exec";
 
-// ================= STATE =================
 let namaPeserta="";
 let finished=false;
 let i=0;
@@ -237,7 +213,6 @@ const kunci=[0,1,0,2,2,1,0,3,0,3,2,1,0,1,3,3,0,3,1,2,3,1,0,2,0];
 let waktu=3600;
 let interval;
 
-// ================= START =================
 function mulai(){
  const namaInput=document.getElementById("nama");
  const tokenInput=document.getElementById("token");
@@ -249,7 +224,6 @@ function mulai(){
 
  namaPeserta=namaInput.value;
 
- document.documentElement.requestFullscreen();
  document.getElementById("start").style.display="none";
  document.getElementById("quiz").style.display="flex";
 
@@ -258,20 +232,17 @@ function mulai(){
  timer();
 }
 
-// ================= SOAL =================
 function tampil(){
  let q=soalData[i];
  document.getElementById("no").innerText="Soal "+(i+1)+"/25";
 
  document.getElementById("soal").innerHTML=
- `<div class="card">
-   <img src="${q.img}" style="max-width:100%">
- </div>`;
+ `<div class="card"><img src="${q.img}" style="max-width:100%"></div>`;
 
  let html="";
  q.opsi.forEach((o,x)=>{
   html+=`<div class="option ${jawaban[i]==x?'active':''}" onclick="pilih(${x})">
-  <img src="${o}" style="max-height:80px;">
+  <img src="${o}" style="max-height:80px">
   </div>`;
  });
 
@@ -283,7 +254,6 @@ function pilih(x){jawaban[i]=x;tampil();}
 function next(){if(i<24)i++;tampil();}
 function prev(){if(i>0)i--;tampil();}
 
-// ================= NAV =================
 function buildNav(){
  let nav=document.getElementById("nav");
  nav.innerHTML="";
@@ -305,7 +275,6 @@ function updateNav(){
  }
 }
 
-// ================= TIMER =================
 function timer(){
  interval=setInterval(()=>{
   waktu--;
@@ -317,18 +286,18 @@ function timer(){
  },1000);
 }
 
-// ================= SHEET =================
+/* NON-BLOCKING */
 function kirimHasil(benar,salah,kosong,skor){
  fetch(SHEET_URL,{
    method:"POST",
    body:JSON.stringify({
      nama:namaPeserta,
-     benar, salah, kosong, skor
-   })
- });
+     benar,salah,kosong,skor
+   }),
+   headers:{"Content-Type":"application/json"}
+ }).catch(()=>{});
 }
 
-// ================= FINISH =================
 function finish(){
  if(finished)return;
  finished=true;
@@ -344,52 +313,50 @@ function finish(){
 
  let skor=Math.round(benar/25*100);
 
- // kirim ke sheet
- kirimHasil(benar,salah,kosong,skor);
-
- // pilih piala
- let trophyImg="https://i.ibb.co.com/ccGh3v5s/epic-transparan.png"; // bronze
- if(skor>=80){
-   trophyImg="https://i.ibb.co.com/ShTKq8V/mitic-transparan.png"; // gold
- }else if(skor>=60){
-   trophyImg="https://i.ibb.co.com/7dnbNJGW/legend-transparan.png"; // silver
- }
-
  document.getElementById("quiz").style.display="none";
  let hasil=document.getElementById("hasil");
  hasil.style.display="flex";
-
  setTimeout(()=>hasil.classList.add("show"),100);
+
+ let trophyImg="https://i.ibb.co.com/ccGh3v5s/epic-transparan.png";
+ if(skor>=80){
+   trophyImg="https://i.ibb.co.com/ShTKq8V/mitic-transparan.png";
+ }else if(skor>=60){
+   trophyImg="https://i.ibb.co.com/7dnbNJGW/legend-transparan.png";
+ }
 
  hasil.innerHTML=`
  <div class="result-container">
-
   <img class="trophy" src="${trophyImg}">
-
   <div>
     <h1 style="font-size:42px;">TOTAL NILAI ${skor}</h1>
-
     <div class="chart">
       <div>
         <div class="bar-v" style="height:${benar/25*200}px;background:lime"></div>
         <div class="label">Benar</div>
         <div class="value">${benar}</div>
       </div>
-
       <div>
         <div class="bar-v" style="height:${salah/25*200}px;background:red"></div>
         <div class="label">Salah</div>
         <div class="value">${salah}</div>
       </div>
-
       <div>
-        <div class="bar-v" style="height:${kosong/25*200}px;background:white"></div>
+        <div class="bar-v" style="height:${kosong/25*200}px;background:#e5e7eb"></div>
         <div class="label">Kosong</div>
         <div class="value">${kosong}</div>
       </div>
     </div>
   </div>
-
  </div>
  `;
+
+ /* kirim setelah UI tampil */
+ setTimeout(()=>{
+  kirimHasil(benar,salah,kosong,skor);
+ },100);
 }
+</script>
+
+</body>
+</html>
