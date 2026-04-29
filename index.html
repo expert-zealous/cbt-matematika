@@ -122,8 +122,8 @@ input{
 }
 
 .result-container{
-  align-items:flex-start;display:flex;
-  align-items:center;
+  display:flex;
+  align-items:flex-start;
   gap:40px;
   flex-wrap:wrap;
 }
@@ -132,17 +132,19 @@ input{
   width:180px;
 }
 
-/* CHART */
+/* CHART FIX */
 .chart{
   display:flex;
   gap:40px;
   align-items:flex-end;
-  height:220px;margin-top:40px;
+  height:160px;
+  margin-top:40px;
 }
 
 .bar-v{
   width:60px;
-  border-radius:10px 10px 0 0;max-height:120px;
+  border-radius:10px 10px 0 0;
+  max-height:100px;
 }
 
 .label{text-align:center;margin-top:8px;}
@@ -152,7 +154,6 @@ input{
 
 <body>
 
-<!-- START -->
 <div id="start" class="start">
 <div class="box">
 <img src="https://i.ibb.co.com/rG9kgRd3/LOGO-EZ-NO-Baground2.jpg">
@@ -167,7 +168,6 @@ Mulai Ujian
 </div>
 </div>
 
-<!-- QUIZ -->
 <div id="quiz" style="display:none;flex-direction:column;">
 <div class="header">
 <div id="no"></div>
@@ -286,7 +286,6 @@ function timer(){
  },1000);
 }
 
-/* GET METHOD */
 function kirimHasil(benar,salah,kosong,skor){
  const url = SHEET_URL +
   "?nama=" + encodeURIComponent(namaPeserta) +
@@ -325,24 +324,34 @@ function finish(){
    trophyImg="https://i.ibb.co.com/7dnbNJGW/legend-transparan.png";
  }
 
+ let scale=100;
+ let hBenar=Math.min((benar/25)*scale,100);
+ let hSalah=Math.min((salah/25)*scale,100);
+ let hKosong=Math.min((kosong/25)*scale,100);
+
  hasil.innerHTML=`
  <div class="result-container">
   <img class="trophy" src="${trophyImg}">
   <div>
-    <h1 style="font-size:42px;">TOTAL NILAI ${skor}</h1>
+    <h1 style="font-size:42px; margin-bottom:20px;">
+      TOTAL NILAI ${skor}
+    </h1>
+
     <div class="chart">
       <div>
-        <div class="bar-v" style="height:${benar/25*120}px;background:lime"></div>
+        <div class="bar-v" style="height:${hBenar}px;background:lime"></div>
         <div class="label">Benar</div>
         <div class="value">${benar}</div>
       </div>
+
       <div>
-        <div class="bar-v" style="height:${salah/25*120}px;background:red"></div>
+        <div class="bar-v" style="height:${hSalah}px;background:red"></div>
         <div class="label">Salah</div>
         <div class="value">${salah}</div>
       </div>
+
       <div>
-        <div class="bar-v" style="height:${kosong/25*120}px;background:#e5e7eb"></div>
+        <div class="bar-v" style="height:${hKosong}px;background:#e5e7eb"></div>
         <div class="label">Kosong</div>
         <div class="value">${kosong}</div>
       </div>
