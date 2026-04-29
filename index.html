@@ -344,17 +344,52 @@ function finish(){
 
  let skor=Math.round(benar/25*100);
 
+ // kirim ke sheet
  kirimHasil(benar,salah,kosong,skor);
+
+ // pilih piala
+ let trophyImg="https://i.ibb.co.com/ccGh3v5s/epic-transparan.png"; // bronze
+ if(skor>=80){
+   trophyImg="https://i.ibb.co.com/ShTKq8V/mitic-transparan.png"; // gold
+ }else if(skor>=60){
+   trophyImg="https://i.ibb.co.com/7dnbNJGW/legend-transparan.png"; // silver
+ }
 
  document.getElementById("quiz").style.display="none";
  let hasil=document.getElementById("hasil");
  hasil.style.display="flex";
- hasil.classList.add("show");
 
- hasil.innerHTML=`<h1 style="font-size:40px;">Nilai ${skor}</h1>`;
+ setTimeout(()=>hasil.classList.add("show"),100);
+
+ hasil.innerHTML=`
+ <div class="result-container">
+
+  <img class="trophy" src="${trophyImg}">
+
+  <div>
+    <h1 style="font-size:42px;">TOTAL NILAI ${skor}</h1>
+
+    <div class="chart">
+      <div>
+        <div class="bar-v" style="height:${benar/25*200}px;background:lime"></div>
+        <div class="label">Benar</div>
+        <div class="value">${benar}</div>
+      </div>
+
+      <div>
+        <div class="bar-v" style="height:${salah/25*200}px;background:red"></div>
+        <div class="label">Salah</div>
+        <div class="value">${salah}</div>
+      </div>
+
+      <div>
+        <div class="bar-v" style="height:${kosong/25*200}px;background:white"></div>
+        <div class="label">Kosong</div>
+        <div class="value">${kosong}</div>
+      </div>
+    </div>
+  </div>
+
+ </div>
+ `;
 }
-
-</script>
-
-</body>
-</html>
