@@ -68,9 +68,26 @@ input{
   border-radius:10px;
   border:1px solid #cbd5e1;
   cursor:pointer;
-}
-.option.active{background:#dc2626;color:white;}
 
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:10px;
+}
+
+/* aktif */
+.option.active{
+  background:#dc2626;
+  border:2px solid #dc2626;
+}
+
+/* gambar normal (AMAN) */
+.option img{
+  max-height:80px;
+  display:block;
+}
+
+/* NAV */
 .nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
 
 .nav-box{
@@ -88,6 +105,7 @@ input{
 .nav-box.done{background:#10b981;color:white;}
 .nav-box.active{border:2px solid red;}
 
+/* BUTTON */
 .btn{
   padding:10px 18px;
   border-radius:10px;
@@ -155,8 +173,6 @@ input{
 
 <body>
 
-<canvas id="fireworks" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;"></canvas>
-
 <!-- START -->
 <div id="start" class="start">
 <div class="box">
@@ -201,7 +217,12 @@ Mulai Ujian
 
 <script>
 
+// ================= CONFIG =================
 const TOKEN="EZ2026";
+const SHEET_URL="https://script.google.com/macros/s/AKfycbx-Li92VI_MPrWMjY1lJ5e4tuh4X4r6jDYhcrxqyxB7mAcxNcQD26Fmg_MOQ2UI8-BB/exec";
+
+// ================= STATE =================
+let namaPeserta="";
 let finished=false;
 let i=0;
 let jawaban=new Array(25).fill(-1);
@@ -216,26 +237,45 @@ const kunci=[0,1,0,2,2,1,0,3,0,3,2,1,0,1,3,3,0,3,1,2,3,1,0,2,0];
 let waktu=3600;
 let interval;
 
+// ================= START =================
 function mulai(){
- if(!nama.value||token.value!==TOKEN) return alert("Data salah");
+ const namaInput=document.getElementById("nama");
+ const tokenInput=document.getElementById("token");
+
+ if(!namaInput.value || tokenInput.value!==TOKEN){
+   alert("Data salah");
+   return;
+ }
+
+ namaPeserta=namaInput.value;
+
  document.documentElement.requestFullscreen();
- start.style.display="none";
- quiz.style.display="flex";
+ document.getElementById("start").style.display="none";
+ document.getElementById("quiz").style.display="flex";
+
  buildNav();
  tampil();
  timer();
 }
 
+// ================= SOAL =================
 function tampil(){
  let q=soalData[i];
- no.innerText="Soal "+(i+1)+"/25";
- soal.innerHTML=`<div class="card"><img src="${q.img}" style="max-width:100%"></div>`;
+ document.getElementById("no").innerText="Soal "+(i+1)+"/25";
+
+ document.getElementById("soal").innerHTML=
+ `<div class="card">
+   <img src="${q.img}" style="max-width:100%">
+ </div>`;
+
  let html="";
  q.opsi.forEach((o,x)=>{
   html+=`<div class="option ${jawaban[i]==x?'active':''}" onclick="pilih(${x})">
-  <img src="${o}" style="max-height:80px"></div>`;
+  <img src="${o}" style="max-height:80px;">
+  </div>`;
  });
- opsi.innerHTML=html;
+
+ document.getElementById("opsi").innerHTML=html;
  updateNav();
 }
 
@@ -243,7 +283,9 @@ function pilih(x){jawaban[i]=x;tampil();}
 function next(){if(i<24)i++;tampil();}
 function prev(){if(i>0)i--;tampil();}
 
+// ================= NAV =================
 function buildNav(){
+ let nav=document.getElementById("nav");
  nav.innerHTML="";
  for(let x=0;x<25;x++){
   let d=document.createElement("div");
@@ -255,14 +297,15 @@ function buildNav(){
 }
 
 function updateNav(){
- let d=nav.children;
+ let nav=document.getElementById("nav").children;
  for(let x=0;x<25;x++){
-  d[x].className="nav-box";
-  if(jawaban[x]>=0)d[x].classList.add("done");
-  if(x==i)d[x].classList.add("active");
+  nav[x].className="nav-box";
+  if(jawaban[x]>=0)nav[x].classList.add("done");
+  if(x==i)nav[x].classList.add("active");
  }
 }
 
+// ================= TIMER =================
 function timer(){
  interval=setInterval(()=>{
   waktu--;
@@ -274,59 +317,23 @@ function timer(){
  },1000);
 }
 
-function beep(){
- let ctx=new AudioContext();
- let o=ctx.createOscillator();
- let g=ctx.createGain();
- o.connect(g);g.connect(ctx.destination);
- o.frequency.value=800;
- o.start();
- g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.2);
- o.stop(ctx.currentTime+0.2);
+// ================= SHEET =================
+function kirimHasil(benar,salah,kosong,skor){
+ fetch(SHEET_URL,{
+   method:"POST",
+   body:JSON.stringify({
+     nama:namaPeserta,
+     benar, salah, kosong, skor
+   })
+ });
 }
 
-function fireworks(){
- const c=document.getElementById("fireworks");
- const ctx=c.getContext("2d");
- c.width=innerWidth;
- c.height=innerHeight;
-
- let p=[];
- for(let i=0;i<120;i++){
-  p.push({
-   x:c.width/2,y:c.height/2,
-   vx:(Math.random()-0.5)*10,
-   vy:(Math.random()-0.5)*10,
-   a:1,
-   color:`hsl(${Math.random()*360},100%,60%)`
-  });
- }
-
- function draw(){
-  ctx.clearRect(0,0,c.width,c.height);
-  p.forEach(o=>{
-   o.x+=o.vx;o.y+=o.vy;o.a-=0.01;
-   ctx.globalAlpha=o.a;
-   ctx.fillStyle=o.color;
-   ctx.fillRect(o.x,o.y,3,3);
-  });
-  p=p.filter(o=>o.a>0);
-  if(p.length) requestAnimationFrame(draw);
- }
-
- draw();
- setTimeout(()=>ctx.clearRect(0,0,c.width,c.height),3000);
-}
-
+// ================= FINISH =================
 function finish(){
- if(finished) return;
+ if(finished)return;
  finished=true;
 
  clearInterval(interval);
- document.getElementById("btnFinish").disabled=true;
- document.getElementById("btnFinish").classList.add("btn-disabled");
-
- beep();
 
  let benar=0,salah=0,kosong=0;
  jawaban.forEach((a,x)=>{
@@ -337,61 +344,15 @@ function finish(){
 
  let skor=Math.round(benar/25*100);
 
- // 🏆 PILIH GAMBAR PIALA ASLI
- let trophyImg="https://i.ibb.co.com/ccGh3v5s/epic-transparan.png"; // bronze
- if(skor>=80){
-   trophyImg="https://i.ibb.co.com/ShTKq8V/mitic-transparan.png"; // gold
- }else if(skor>=60){
-   trophyImg="https://i.ibb.co.com/7dnbNJGW/legend-transparan.png"; // silver
- }
+ kirimHasil(benar,salah,kosong,skor);
 
- quiz.style.display="none";
+ document.getElementById("quiz").style.display="none";
+ let hasil=document.getElementById("hasil");
  hasil.style.display="flex";
+ hasil.classList.add("show");
 
- setTimeout(()=>hasil.classList.add("show"),100);
-
- fireworks();
-
- hasil.innerHTML=`
- <div class="result-container">
-
-  <img class="trophy" src="${trophyImg}">
-
-  <div>
-    <h1 style="font-size:42px;">TOTAL NILAI ${skor}</h1>
-
-    <div class="chart">
-      <div>
-        <div class="bar-v" style="height:${benar/25*200}px;background:lime"></div>
-        <div class="label">Benar</div>
-        <div class="value">${benar}</div>
-      </div>
-
-      <div>
-        <div class="bar-v" style="height:${salah/25*200}px;background:red"></div>
-        <div class="label">Salah</div>
-        <div class="value">${salah}</div>
-      </div>
-
-      <div>
-        <div class="bar-v" style="height:${kosong/25*200}px;background:white"></div>
-        <div class="label">Kosong</div>
-        <div class="value">${kosong}</div>
-      </div>
-    </div>
-  </div>
-
- </div>
- `;
+ hasil.innerHTML=`<h1 style="font-size:40px;">Nilai ${skor}</h1>`;
 }
-
-document.addEventListener("visibilitychange",()=>{
- if(document.hidden && !finished) finish();
-});
-
-document.addEventListener("fullscreenchange",()=>{
- if(!document.fullscreenElement && !finished) finish();
-});
 
 </script>
 
